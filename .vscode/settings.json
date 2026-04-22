@@ -1,0 +1,9 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "C:/Users/Ravi.Konduru/AppData/Local/Python/pythoncore-3.14-64/python.exe": true,
+        "pip-audit-html": true,
+        ".\\.venv\\Scripts\\python.exe": true,
+        ".\\.venv\\Scripts\\pip-audit-html.exe": true,
+        ".\\007_run_audit.bat": true
+    }
+}
