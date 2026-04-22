@@ -7,13 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: "Publish target"
+        description: "Publish target (manual dispatch is TestPyPI only)"
         required: true
         default: testpypi
         type: choice
         options:
           - testpypi
-          - pypi
 
 jobs:
   # ── 1. Run tests ────────────────────────────────────────────────────────────
@@ -94,9 +93,8 @@ jobs:
     name: Publish → PyPI
     needs: build
     if: >
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'workflow_dispatch' &&
-       github.event.inputs.target == 'pypi')
+      github.event_name == 'push' &&
+      startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       id-token: write        # required for OIDC trusted publishing
