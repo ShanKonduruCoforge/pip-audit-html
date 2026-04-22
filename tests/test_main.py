@@ -6,13 +6,23 @@ import pytest
 
 from pip_audit_html.cli import main
 from pip_audit_html.converter import convert_json_to_html, load_report
-mcp = pytest.importorskip("mcp", reason="mcp extra not installed")
-from pip_audit_html.server import (  # noqa: E402
-    audit_and_report,
-    generate_report,
-    get_summary,
-    get_vulnerabilities,
-)
+
+try:
+    import mcp  # noqa: F401
+except ImportError:
+    MCP_AVAILABLE = False
+    audit_and_report = None
+    generate_report = None
+    get_summary = None
+    get_vulnerabilities = None
+else:
+    MCP_AVAILABLE = True
+    from pip_audit_html.server import (  # noqa: E402
+        audit_and_report,
+        generate_report,
+        get_summary,
+        get_vulnerabilities,
+    )
 
 
 @pytest.mark.unit
@@ -221,6 +231,7 @@ _SAMPLE_AUDIT_JSON = json.dumps(
 )
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.unit
 def test_mcp_get_summary_returns_correct_counts():
     result = json.loads(get_summary(_SAMPLE_AUDIT_JSON))
@@ -232,6 +243,7 @@ def test_mcp_get_summary_returns_correct_counts():
     assert result["is_clean"] is False
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.unit
 def test_mcp_get_vulnerabilities_returns_findings():
     result = json.loads(get_vulnerabilities(_SAMPLE_AUDIT_JSON))
@@ -244,6 +256,7 @@ def test_mcp_get_vulnerabilities_returns_findings():
     assert "2.20.0" in finding["fix_versions"]
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.unit
 def test_mcp_get_vulnerabilities_respects_ignore_vulns():
     result = json.loads(
@@ -253,6 +266,7 @@ def test_mcp_get_vulnerabilities_respects_ignore_vulns():
     assert result == []
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.unit
 def test_mcp_get_summary_is_clean_when_all_ignored():
     result = json.loads(
@@ -263,6 +277,7 @@ def test_mcp_get_summary_is_clean_when_all_ignored():
     assert result["total_vulnerabilities"] == 0
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.integration
 def test_mcp_generate_report_writes_html_file(tmp_path):
     out = tmp_path / "mcp_report.html"
@@ -279,6 +294,7 @@ def test_mcp_generate_report_writes_html_file(tmp_path):
     assert "Shan Konduru" in content
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.integration
 def test_mcp_generate_report_uses_temp_file_when_no_output_path():
     path = generate_report(json_input=_SAMPLE_AUDIT_JSON)
@@ -290,6 +306,7 @@ def test_mcp_generate_report_uses_temp_file_when_no_output_path():
     p.unlink()
 
 
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
 @pytest.mark.integration
 def test_mcp_audit_and_report_combines_audit_and_generate(tmp_path):
     out = tmp_path / "combined.html"
