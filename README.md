@@ -156,79 +156,181 @@ Once configured, your AI can call the tools directly. Example prompts:
 
 ---
 
-### Option 2 — Command Line (pip install + direct invocation)
+### Option 2 — Command Line (no IDE required)
 
-Use the MCP tools directly from the command line without any IDE or AI client.
+Use `pip-audit-html` directly from the command line. No AI assistant or IDE needed — just install and run.
 
-#### Step 1 — Install with MCP support
+#### Install
+
+```bash
+pip install pip-audit-html
+```
+
+To also use the MCP Python API (optional):
 
 ```bash
 pip install "pip-audit-html[mcp]"
 ```
 
-#### Step 2 — Run individual tools
+---
 
-Each tool accepts JSON input/output via the command line. Use the `mcp` CLI to call tools directly:
+#### "Audit my Python environment and show me what's vulnerable."
 
-**Audit current environment:**
+This runs `pip-audit` against the currently active Python environment, converts the output to HTML, and opens the report. `pip-audit` must be installed separately.
 
 ```bash
-pip-audit-html-mcp
+pip install pip-audit
 ```
 
-Or invoke tools via the `mcp` client:
+**Windows:**
+```cmd
+pip-audit --format json -o audit.json
+pip-audit-html audit.json -o report.html
+start report.html
+```
+
+**macOS / Linux:**
+```bash
+pip-audit --format json -o audit.json
+pip-audit-html audit.json -o report.html
+open report.html        # macOS
+xdg-open report.html   # Linux
+```
+
+Or pipe directly without saving the JSON file:
 
 ```bash
-# Audit the active environment and print JSON findings
+pip-audit --format json | pip-audit-html - -o report.html
+```
+
+> `pip-audit` exits with code 1 when vulnerabilities are found — this is expected. The JSON and HTML are still produced correctly.
+
+---
+
+#### "Generate an HTML security report for my project at C:/myproject."
+
+Audit a specific project directory (instead of the global/active environment):
+
+**Windows:**
+```cmd
+pip-audit --format json --path C:\myproject -o audit.json
+pip-audit-html audit.json -o report.html --title "My Project Security Report"
+start report.html
+```
+
+**macOS / Linux:**
+```bash
+pip-audit --format json --path /path/to/myproject -o audit.json
+pip-audit-html audit.json -o report.html --title "My Project Security Report"
+```
+
+> `--path` tells pip-audit to audit a specific project or virtualenv directory rather than the currently active Python environment.
+
+---
+
+#### "Summarize the vulnerabilities in this pip-audit JSON file."
+
+If you already have a `pip-audit` JSON file and just want a quick text summary:
+
+```bash
 python -c "
-from pip_audit_html.server import run_audit, get_summary, generate_report
 import json
-
-# Step 1: run audit
-audit_json = run_audit()
-
-# Step 2: print summary
-summary = json.loads(get_summary(audit_json))
-print(f'Packages: {summary[\"total_dependencies\"]}  Vulnerable: {summary[\"total_vulnerabilities\"]}  Safe: {summary[\"total_safe\"]}')
-
-# Step 3: generate report
-path = generate_report(audit_json, output_path='audit_report.html')
-print(f'Report saved to: {path}')
+from pip_audit_html.server import get_summary
+summary = json.loads(get_summary(open('audit.json').read()))
+print('Packages audited :', summary['total_dependencies'])
+print('Vulnerable        :', summary['total_vulnerabilities'])
+print('Safe              :', summary['total_safe'])
+print('Skipped           :', summary['total_skipped'])
+print('Clean             :', summary['is_clean'])
 "
 ```
 
-**One-step audit and report:**
+Example output:
+
+```
+Packages audited : 42
+Vulnerable        : 3
+Safe              : 38
+Skipped           : 1
+Clean             : False
+```
+
+To see the full list of individual vulnerability findings:
 
 ```bash
 python -c "
-from pip_audit_html.server import audit_and_report
 import json
-result = json.loads(audit_and_report(output_path='audit_report.html'))
-print(result)
+from pip_audit_html.server import get_vulnerabilities
+findings = json.loads(get_vulnerabilities(open('audit.json').read()))
+for f in findings:
+    print(f['package'], f['version'], '->', f['vuln_id'], f['aliases'])
 "
 ```
 
-**Audit a specific virtualenv or project path:**
+---
+
+#### "Audit my environment and ignore CVE-2024-1234, then save the report to report.html."
+
+Some vulnerabilities may not apply to your usage, or you may have accepted the risk. Use `--ignore-vuln` to exclude them from the report:
+
+```bash
+pip-audit --format json | pip-audit-html - -o report.html --ignore-vuln CVE-2024-1234
+```
+
+Ignore multiple IDs in one command (repeat the flag or use comma-separated values):
+
+```bash
+pip-audit --format json | pip-audit-html - -o report.html \
+  --ignore-vuln CVE-2024-1234 \
+  --ignore-vuln PYSEC-2024-99
+```
+
+```bash
+pip-audit --format json | pip-audit-html - -o report.html \
+  --ignore-vuln "CVE-2024-1234,PYSEC-2024-99"
+```
+
+> Ignored IDs are matched against both the primary vulnerability ID and any aliases (e.g. a PYSEC ID that aliases a CVE). Matching is case-insensitive.
+
+Also make CI exit 0 when all remaining (non-ignored) vulns are suppressed:
+
+```bash
+pip-audit --format json | pip-audit-html - -o report.html \
+  --ignore-vuln CVE-2024-1234 \
+  --fail-on-vulns
+```
+
+> `--fail-on-vulns` exits with code 1 only if vulnerabilities remain **after** the ignore list is applied. If everything is ignored, the exit code is 0.
+
+---
+
+#### One-step audit + report (Python API)
+
+If you prefer Python scripting over shell pipes:
 
 ```bash
 python -c "
-from pip_audit_html.server import audit_and_report
 import json
+from pip_audit_html.server import audit_and_report
+result = json.loads(audit_and_report(output_path='report.html'))
+print('Report saved to :', result['html_path'])
+print('Vulnerable       :', result['total_vulnerabilities'])
+print('Clean            :', result['is_clean'])
+"
+```
+
+For a specific project path:
+
+```bash
+python -c "
+import json
+from pip_audit_html.server import audit_and_report
 result = json.loads(audit_and_report(target_path='C:/myproject', output_path='report.html'))
-print(result)
+print(json.dumps(result, indent=2))
 "
 ```
 
-**Ignore specific CVEs:**
 
-```bash
-python -c "
-from pip_audit_html.server import audit_and_report
-import json
-result = json.loads(audit_and_report(ignore_vulns='CVE-2024-1234,PYSEC-2024-99', output_path='report.html'))
-print(result)
-"
-```
 
 ## Local development
 
