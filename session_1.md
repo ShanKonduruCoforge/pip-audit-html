@@ -401,13 +401,178 @@ PyPI production:
 
 ---
 
-## 13. Session Completion State
+## 13. Session Completion State (v0.1.0)
 
-Project status at close of session:
+Project status at close of initial productization phase:
 
 - Functional objective achieved end-to-end
 - Source code, CLI UX, tests, docs, scripts, CI, and release path all implemented
 - Repository synchronized with remote `main`
 - Guardrails added to reduce accidental production releases
+
+---
+
+## 14. Post-Session Release History
+
+### 14.1 v0.1.1 — First PyPI Release
+
+Trigger: Project was not visible on PyPI or TestPyPI after initial setup.
+
+Actions taken:
+
+- Confirmed no release tag existed and no dist artifacts were present
+- Bumped version from `0.1.0` to `0.1.1` in `pyproject.toml`
+- Committed and pushed to `main`
+- Created and pushed tag `v0.1.1` to trigger GitHub Actions publish workflow
+
+Commit: `1f939a7` — `chore: bump version to 0.1.1 for release`
+
+Result:
+
+- `v0.1.1` became the first release visible on PyPI
+
+---
+
+### 14.2 v0.1.2 — Report Attribution (Footer Credits)
+
+Feature request: Add author name and LinkedIn URL to generated report footer.
+
+Changes made:
+
+- `converter.py`: Added optional `author_name` and `author_url` parameters to `render_html()` and `convert_json_to_html()`
+- HTML template: Footer now renders a clickable LinkedIn attribution link when author fields are provided
+- `cli.py`: Added `--author-name` and `--author-url` CLI arguments
+- `007_run_audit.bat` / `007_run_audit.sh`: Updated to pass `--author-name "Shan Konduru" --author-url "https://www.linkedin.com/in/shankonduru/"` by default
+- Tests: Added test asserting footer attribution link is present in HTML output
+- `README.md`: Documented new CLI flags
+
+Commit: `603af25` — `feat: add configurable report attribution and bump version to 0.1.2`
+
+Build/publish scripts added as part of this release:
+
+- `009_build.bat/.sh` — build wheel + sdist, run twine check
+- `010_publish_testpypi.bat/.sh` — publish to TestPyPI via twine
+- `011_publish_pypi.bat/.sh` — publish to production PyPI via twine (with YES confirmation prompt)
+
+---
+
+### 14.3 v0.1.3 — CVE / Vulnerability Ignore List
+
+Feature request: CLI option to suppress specific CVE/vulnerability IDs from the HTML output.
+
+Changes made:
+
+- `converter.py`: Added `_normalize_ignore_ids()` helper that normalizes IDs to uppercase set
+- `converter.py`: Added `ignore_vuln_ids` parameter to `load_report()` and `convert_json_to_html()`
+- Filtering logic: Matches against both vulnerability `id` AND `aliases` fields (case-insensitive)
+- `cli.py`: Added `--ignore-vuln` argument with `append` action, supports repeated flags and comma-separated values
+- `cli.py`: Added `_parse_ignore_ids()` helper to split and flatten comma-separated values
+- Tests: Added two new tests covering ignore-by-ID and ignore-by-alias behavior
+- `README.md`: Documented `--ignore-vuln` usage with examples
+
+Commit: `a4c91d4` — `feat: add ignore-vuln CLI filtering and bump version to 0.1.3`
+
+Test count after this release: **8 passing**
+
+Usage examples:
+
+```
+pip-audit-html audit.json --ignore-vuln PYSEC-2023-1
+pip-audit-html audit.json --ignore-vuln CVE-2023-1234,CVE-2023-5678
+pip-audit-html audit.json --ignore-vuln PYSEC-2023-1 --ignore-vuln CVE-2023-9999
+```
+
+---
+
+### 14.4 v0.1.4 — Default Author Credits (Bug Fix)
+
+Problem identified: Author name and LinkedIn URL were not visible when users installed the library from PyPI and ran the CLI without explicitly passing `--author-name` and `--author-url` flags. The defaults in argparse were `None`.
+
+Root cause:
+
+- `cli.py` `--author-name` and `--author-url` parser defaults were `None`
+- Users downloading from PyPI had no indication to pass these flags
+
+Fix applied:
+
+- Added module-level constants in `cli.py`:
+  ```python
+  DEFAULT_AUTHOR_NAME = "Shan Konduru"
+  DEFAULT_AUTHOR_URL = "https://www.linkedin.com/in/shankonduru/"
+  ```
+- Changed parser argument defaults to use these constants
+- All CLI users now see footer attribution without any extra flags required
+- Test updated: `test_cli_from_file` now asserts `"Shan Konduru"` appears in the CLI-generated HTML output without explicit flags
+
+Commit: `40d49c4` — `fix: include default author attribution in CLI output and bump to 0.1.4`
+
+Tests: **8 passing**
+
+---
+
+## 15. Full Version History
+
+| Version | Commit    | Description                                         |
+|---------|-----------|-----------------------------------------------------|
+| 0.1.0   | `6950d0e` | Initial release — full productization from scaffold |
+| 0.1.1   | `1f939a7` | First PyPI release trigger (version bump + tag)     |
+| 0.1.2   | `603af25` | Footer attribution — author name and LinkedIn URL   |
+| 0.1.3   | `a4c91d4` | `--ignore-vuln` CVE filtering feature               |
+| 0.1.4   | `40d49c4` | Default author credits fix for PyPI users           |
+
+---
+
+## 16. Recurring Issue: Indentation Errors in converter.py
+
+During patch operations across v0.1.2 and v0.1.3, the patch tool repeatedly introduced mixed indentation (2-space blocks inserted into 4-space codebase) in `converter.py`, causing `IndentationError` at runtime.
+
+Pattern observed:
+
+- Each feature addition to `converter.py` required a subsequent fix pass to normalize indentation
+- Errors surfaced immediately on `pytest` runs
+
+Lesson:
+
+- Always run `pytest` immediately after any edit to `converter.py`
+- Verify indentation visually around any newly added blocks before committing
+
+---
+
+## 17. Current State (v0.1.4)
+
+Repository:
+
+- Local branch `main` at commit `40d49c4`
+- Remote `main` synced
+- Tag `v0.1.4` pushed to remote (confirmed at `refs/tags/v0.1.4`)
+
+Package structure:
+
+- `src/pip_audit_html/__init__.py`
+- `src/pip_audit_html/converter.py` — JSON parsing, HTML rendering, CVE filtering
+- `src/pip_audit_html/cli.py` — argparse CLI with default author credits
+- `src/pip_audit_html/__main__.py` — module invocation support
+
+Test suite:
+
+- 8 tests passing across: HTML rendering, footer attribution, ignore-by-alias, invalid JSON, CLI from file, CLI from stdin, `--fail-on-vulns` exit code, `--ignore-vuln` exit code change
+
+CLI features:
+
+| Flag              | Purpose                                              |
+|-------------------|------------------------------------------------------|
+| `input`           | Input JSON file path (or `-` for stdin)              |
+| `-o/--output`     | Output HTML file path                                |
+| `--title`         | Custom report title                                  |
+| `--encoding`      | Text encoding                                        |
+| `--author-name`   | Footer attribution name (default: Shan Konduru)      |
+| `--author-url`    | Footer attribution URL (default: LinkedIn profile)   |
+| `--fail-on-vulns` | Exit 1 if vulnerabilities found (CI integration)     |
+| `--ignore-vuln`   | Suppress specific CVE/vuln IDs from HTML output      |
+
+PyPI:
+
+- Versions published: 0.1.1, 0.1.2, 0.1.3, 0.1.4
+- v0.1.4 triggered via tag push; GitHub Actions workflow uses OIDC Trusted Publishing (no secrets required)
 
 End of Session 1.
