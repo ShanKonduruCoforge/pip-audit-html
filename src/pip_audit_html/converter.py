@@ -14,12 +14,20 @@ def _safe_list(value: Any) -> List[Any]:
     return []
 
 
-def load_report(json_text: str) -> Dict[str, Any]:
+def _normalize_ignore_ids(ignore_vuln_ids: List[str] | None) -> set[str]:
+    if not ignore_vuln_ids:
+        return set()
+    return {item.strip().upper() for item in ignore_vuln_ids if item and item.strip()}
+
+
+def load_report(json_text: str, ignore_vuln_ids: List[str] | None = None) -> Dict[str, Any]:
     """Parse and normalize a pip-audit JSON payload."""
     try:
         raw = json.loads(json_text)
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON input: {exc}") from exc
+
+    ignored_ids = _normalize_ignore_ids(ignore_vuln_ids)
 
     dependencies = _safe_list(raw.get("dependencies"))
     normalized_dependencies: List[Dict[str, Any]] = []
@@ -58,6 +66,10 @@ def load_report(json_text: str) -> Dict[str, Any]:
             aliases = [str(item) for item in _safe_list(vuln.get("aliases"))]
             fix_versions = [str(item) for item in _safe_list(vuln.get("fix_versions"))]
             description = str(vuln.get("description", ""))
+
+            candidates = {vuln_id.upper(), *(alias.upper() for alias in aliases)}
+            if ignored_ids.intersection(candidates):
+                continue
 
             normalized_vulns.append(
                 {
@@ -628,7 +640,8 @@ def convert_json_to_html(
     title: str = "pip-audit HTML report",
     author_name: str | None = None,
     author_url: str | None = None,
+    ignore_vuln_ids: List[str] | None = None,
 ) -> str:
     """Convert pip-audit JSON string directly into HTML string."""
-    report = load_report(json_text)
+    report = load_report(json_text, ignore_vuln_ids=ignore_vuln_ids)
     return render_html(report, title=title, author_name=author_name, author_url=author_url)

@@ -42,6 +42,18 @@ Set custom title and fail build if vulnerabilities exist:
 pip-audit-html pip-audit-report.json -o report.html --title "Weekly Dependency Security" --fail-on-vulns
 ```
 
+Hide specific vulnerabilities (IDs/CVEs) from rendered HTML output:
+
+```bash
+pip-audit-html pip-audit-report.json -o report.html --ignore-vuln PYSEC-2024-10 --ignore-vuln CVE-2024-12345
+```
+
+You can also pass comma-separated values:
+
+```bash
+pip-audit-html pip-audit-report.json -o report.html --ignore-vuln "PYSEC-2024-10,CVE-2024-12345"
+```
+
 You can also run it as a module:
 
 ```bash

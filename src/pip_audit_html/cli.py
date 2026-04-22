@@ -9,6 +9,17 @@ from pathlib import Path
 from .converter import convert_json_to_html, load_report
 
 
+def _parse_ignore_ids(raw_values: list[str] | None) -> list[str]:
+    if not raw_values:
+        return []
+
+    result: list[str] = []
+    for raw in raw_values:
+        parts = [item.strip() for item in raw.split(",")]
+        result.extend(item for item in parts if item)
+    return result
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pip-audit-html",
@@ -47,6 +58,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Profile URL to link from footer attribution (for example LinkedIn).",
     )
     parser.add_argument(
+        "--ignore-vuln",
+        action="append",
+        default=[],
+        metavar="ID",
+        help="Vulnerability ID/CVE to hide in report. Repeat or pass comma-separated values.",
+    )
+    parser.add_argument(
         "--fail-on-vulns",
         action="store_true",
         help="Return exit code 1 when vulnerabilities are found.",
@@ -63,6 +81,7 @@ def _read_input(input_path: str, encoding: str) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    ignore_ids = _parse_ignore_ids(args.ignore_vuln)
 
     try:
         json_text = _read_input(args.input, args.encoding)
@@ -71,12 +90,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        report = load_report(json_text)
+        report = load_report(json_text, ignore_vuln_ids=ignore_ids)
         html_output = convert_json_to_html(
             json_text,
             title=args.title,
             author_name=args.author_name,
             author_url=args.author_url,
+            ignore_vuln_ids=ignore_ids,
         )
     except ValueError as exc:
         print(f"Invalid report data: {exc}", file=sys.stderr)
