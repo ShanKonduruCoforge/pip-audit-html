@@ -1,0 +1,32 @@
+@echo off
+echo ============================================================
+echo  Publish to TestPyPI
+echo  https://test.pypi.org/project/pip-audit-html/
+echo ============================================================
+echo.
+
+if not exist .\.venv\Scripts\python.exe (
+  echo ERROR: .venv not found. Run 001_env.bat and 003_setup.bat first.
+  exit /b 1
+)
+
+if not exist dist\ (
+  echo ERROR: dist\ not found. Run 009_build.bat first.
+  exit /b 1
+)
+
+if "%TWINE_PASSWORD%"=="" (
+  echo NOTE: TWINE_PASSWORD env variable not set.
+  echo       You will be prompted for your TestPyPI API token.
+  echo       Get one at: https://test.pypi.org/manage/account/token/
+  echo.
+)
+
+.\.venv\Scripts\python.exe -m twine upload ^
+  --repository-url https://test.pypi.org/legacy/ ^
+  --username __token__ ^
+  dist\*
+
+echo.
+echo Published to TestPyPI. Install and verify with:
+echo   pip install --index-url https://test.pypi.org/simple/ pip-audit-html
