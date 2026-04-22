@@ -22,7 +22,9 @@ if %errorlevel% neq 0 (
 echo Converting JSON report to HTML...
 .\.venv\Scripts\pip-audit-html.exe audit_reports\pip-audit-report.json ^
   -o audit_reports\pip-audit-report.html ^
-  --title "pip-audit Security Report"
+  --title "pip-audit Security Report" ^
+  --author-name "Shan Konduru" ^
+  --author-url "https://www.linkedin.com/in/shankonduru/"
 
 if %errorlevel% neq 0 (
   echo ERROR: HTML conversion failed.

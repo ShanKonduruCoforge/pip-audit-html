@@ -34,6 +34,22 @@ def test_convert_json_to_html_contains_dependency_data():
     assert "2.20.0" in html
 
 
+@pytest.mark.unit
+def test_convert_json_to_html_includes_author_footer_link():
+    sample = {"dependencies": [{"name": "requests", "version": "2.19.0", "vulns": []}]}
+
+    html = convert_json_to_html(
+        json.dumps(sample),
+        title="Security Report",
+        author_name="Ravi Konduru",
+        author_url="https://www.linkedin.com/in/ravi-konduru",
+    )
+
+    assert "Designed and developed by" in html
+    assert "Ravi Konduru" in html
+    assert "https://www.linkedin.com/in/ravi-konduru" in html
+
+
 @pytest.mark.edge
 def test_load_report_invalid_json_raises_value_error():
     with pytest.raises(ValueError):

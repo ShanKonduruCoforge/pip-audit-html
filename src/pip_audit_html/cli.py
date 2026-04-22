@@ -37,6 +37,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Text encoding for reading input and writing output.",
     )
     parser.add_argument(
+        "--author-name",
+        default=None,
+        help="Name to show in report footer attribution.",
+    )
+    parser.add_argument(
+        "--author-url",
+        default=None,
+        help="Profile URL to link from footer attribution (for example LinkedIn).",
+    )
+    parser.add_argument(
         "--fail-on-vulns",
         action="store_true",
         help="Return exit code 1 when vulnerabilities are found.",
@@ -62,7 +72,12 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         report = load_report(json_text)
-        html_output = convert_json_to_html(json_text, title=args.title)
+        html_output = convert_json_to_html(
+            json_text,
+            title=args.title,
+            author_name=args.author_name,
+            author_url=args.author_url,
+        )
     except ValueError as exc:
         print(f"Invalid report data: {exc}", file=sys.stderr)
         return 2

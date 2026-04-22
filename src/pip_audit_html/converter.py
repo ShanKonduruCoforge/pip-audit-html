@@ -125,7 +125,12 @@ def _description_cell(vulns: List[Dict[str, Any]]) -> str:
     return "".join(parts) or '<span class="muted">—</span>'
 
 
-def render_html(report: Dict[str, Any], title: str = "pip-audit HTML report") -> str:
+def render_html(
+  report: Dict[str, Any],
+  title: str = "pip-audit HTML report",
+  author_name: str | None = None,
+  author_url: str | None = None,
+) -> str:
     """Render normalized report data to a standalone HTML document."""
     total_dependencies = int(report.get("total_dependencies", 0))
     total_vulnerabilities = int(report.get("total_vulnerabilities", 0))
@@ -191,6 +196,15 @@ def render_html(report: Dict[str, Any], title: str = "pip-audit HTML report") ->
 
     rows_html = "\n".join(dependency_rows)
     escaped_title = html.escape(title)
+
+    footer_attribution = ""
+    if author_name:
+      safe_name = html.escape(author_name)
+      if author_url:
+        safe_url = html.escape(author_url, quote=True)
+        footer_attribution = f' &mdash; Designed and developed by <a href="{safe_url}" target="_blank" rel="noopener noreferrer">{safe_name}</a>'
+      else:
+        footer_attribution = f" &mdash; Designed and developed by {safe_name}"
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -454,6 +468,12 @@ def render_html(report: Dict[str, Any], title: str = "pip-audit HTML report") ->
       text-align: center; margin-top: 32px;
       font-size: 12px; color: var(--muted);
     }}
+    .footer a {{
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }}
+    .footer a:hover {{ text-decoration: underline; }}
 
     /* ── Print ── */
     @media print {{
@@ -555,7 +575,7 @@ def render_html(report: Dict[str, Any], title: str = "pip-audit HTML report") ->
     </div>
   </div>
 
-  <div class="footer">pip-audit-html &mdash; standalone security report &mdash; {html.escape(generated_at)}</div>
+  <div class="footer">pip-audit-html &mdash; standalone security report &mdash; {html.escape(generated_at)}{footer_attribution}</div>
 </div>
 
 <script>
@@ -603,7 +623,12 @@ def render_html(report: Dict[str, Any], title: str = "pip-audit HTML report") ->
 """
 
 
-def convert_json_to_html(json_text: str, title: str = "pip-audit HTML report") -> str:
+def convert_json_to_html(
+    json_text: str,
+    title: str = "pip-audit HTML report",
+    author_name: str | None = None,
+    author_url: str | None = None,
+) -> str:
     """Convert pip-audit JSON string directly into HTML string."""
     report = load_report(json_text)
-    return render_html(report, title=title)
+    return render_html(report, title=title, author_name=author_name, author_url=author_url)

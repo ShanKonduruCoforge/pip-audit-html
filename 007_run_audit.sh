@@ -23,7 +23,9 @@ echo "Running pip-audit and generating JSON..."
 echo "Converting JSON report to HTML..."
 ./.venv/bin/pip-audit-html audit_reports/pip-audit-report.json \
   -o audit_reports/pip-audit-report.html \
-  --title "pip-audit Security Report"
+  --title "pip-audit Security Report" \
+  --author-name "Shan Konduru" \
+  --author-url "https://www.linkedin.com/in/shankonduru/"
 
 echo ""
 echo "Done! Open the report:"
