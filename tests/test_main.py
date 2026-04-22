@@ -6,7 +6,8 @@ import pytest
 
 from pip_audit_html.cli import main
 from pip_audit_html.converter import convert_json_to_html, load_report
-from pip_audit_html.server import (
+mcp = pytest.importorskip("mcp", reason="mcp extra not installed")
+from pip_audit_html.server import (  # noqa: E402
     audit_and_report,
     generate_report,
     get_summary,
