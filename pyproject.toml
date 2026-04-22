@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pip-audit-html"
-version = "0.1.5"
+version = "0.1.6"
 description = "Convert pip-audit JSON reports into readable HTML reports"
 readme = "README.md"
 requires-python = ">=3.8"
