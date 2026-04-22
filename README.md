@@ -10,6 +10,11 @@ Convert `pip-audit` JSON output into a standalone, readable HTML report.
 
 ## Installation
 
+Python version support:
+
+- Base CLI and HTML conversion: Python `3.8+`
+- MCP server and MCP Python API: Python `3.10+`
+
 From PyPI (after publish):
 
 ```bash
@@ -70,6 +75,11 @@ python -m pip_audit_html pip-audit-report.json -o report.html
 
 `pip-audit-html` ships an optional **MCP (Model Context Protocol) server** that exposes audit and report generation as local tools. Everything runs **locally over stdio** — no cloud, no ports, no API keys.
 
+Python requirement for MCP support:
+
+- MCP depends on the upstream `mcp` SDK, which requires Python `3.10+`
+- If you are on Python `3.8` or `3.9`, the base `pip-audit-html` CLI still works, but MCP features are not available
+
 ### Available MCP tools
 
 | Tool | Description |
@@ -89,6 +99,8 @@ All tools accept an optional `ignore_vulns` parameter (comma-separated IDs/CVEs)
 Connect pip-audit-html as a local MCP server so your AI assistant can audit your Python environment and generate HTML reports on demand — no manual commands needed.
 
 #### Step 1 — Install with MCP support
+
+This option requires Python `3.10+`.
 
 ```bash
 pip install "pip-audit-html[mcp]"
@@ -166,7 +178,11 @@ Use `pip-audit-html` directly from the command line. No AI assistant or IDE need
 pip install pip-audit-html
 ```
 
+This base install supports Python `3.8+`.
+
 To also use the MCP Python API (optional):
+
+This optional MCP install requires Python `3.10+`.
 
 ```bash
 pip install "pip-audit-html[mcp]"
