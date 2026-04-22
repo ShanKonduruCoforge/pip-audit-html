@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pip-audit-html"
-version = "0.1.4"
+version = "0.1.5"
 description = "Convert pip-audit JSON reports into readable HTML reports"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -35,9 +35,13 @@ dev = [
   "pytest-cov>=4.1",
   "pytest-html>=4.1",
 ]
+mcp = [
+  "mcp>=1.0",
+]
 
 [project.scripts]
 pip-audit-html = "pip_audit_html.cli:main"
+pip-audit-html-mcp = "pip_audit_html.server:main"
 
 [project.urls]
 Homepage = "https://github.com/your-org/pip-audit-html"

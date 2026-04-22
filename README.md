@@ -66,6 +66,61 @@ You can also run it as a module:
 python -m pip_audit_html pip-audit-report.json -o report.html
 ```
 
+## MCP Server (AI Assistant Integration)
+
+`pip-audit-html` ships an optional **MCP (Model Context Protocol) server** that exposes audit and report generation as local tools for AI assistants such as Claude Desktop, VS Code Copilot, and Cursor.
+
+Everything runs **locally over stdio** — no cloud, no ports, no API keys.
+
+### Install with MCP support
+
+```bash
+pip install "pip-audit-html[mcp]"
+```
+
+### MCP tools exposed
+
+| Tool | Description |
+|---|---|
+| `run_audit` | Run pip-audit on the current or a target environment, returns JSON |
+| `generate_report` | Convert pip-audit JSON into a standalone HTML file |
+| `get_vulnerabilities` | Return a structured list of all vulnerability findings |
+| `get_summary` | Return counts: total, vulnerable, safe, skipped |
+| `audit_and_report` | Run audit and generate HTML report in one step |
+
+All tools accept an optional `ignore_vulns` parameter (comma-separated IDs/CVEs).
+
+### Configure Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "pip-audit-html": {
+      "command": "pip-audit-html-mcp"
+    }
+  }
+}
+```
+
+Claude Desktop config is usually at:
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS / Linux**: `~/.config/claude/claude_desktop_config.json`
+
+### Run the MCP server manually
+
+```bash
+pip-audit-html-mcp
+```
+
+### Example AI prompts once connected
+
+- *"Audit my Python environment and show me what's vulnerable."*
+- *"Generate an HTML security report for my project at C:/myproject."*
+- *"Summarize the vulnerabilities in this pip-audit JSON file."*
+- *"Audit my environment and ignore CVE-2024-1234, then save the report to report.html."*
+
 ## Local development
 
 Use existing helper scripts:
