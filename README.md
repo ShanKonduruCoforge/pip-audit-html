@@ -68,17 +68,9 @@ python -m pip_audit_html pip-audit-report.json -o report.html
 
 ## MCP Server (AI Assistant Integration)
 
-`pip-audit-html` ships an optional **MCP (Model Context Protocol) server** that exposes audit and report generation as local tools for AI assistants such as Claude Desktop, VS Code Copilot, and Cursor.
+`pip-audit-html` ships an optional **MCP (Model Context Protocol) server** that exposes audit and report generation as local tools. Everything runs **locally over stdio** — no cloud, no ports, no API keys.
 
-Everything runs **locally over stdio** — no cloud, no ports, no API keys.
-
-### Install with MCP support
-
-```bash
-pip install "pip-audit-html[mcp]"
-```
-
-### MCP tools exposed
+### Available MCP tools
 
 | Tool | Description |
 |---|---|
@@ -90,7 +82,52 @@ pip install "pip-audit-html[mcp]"
 
 All tools accept an optional `ignore_vulns` parameter (comma-separated IDs/CVEs).
 
-### Configure Claude Desktop
+---
+
+### Option 1 — IDE / AI Assistant Integration (VS Code, Cursor, Claude Desktop)
+
+Connect pip-audit-html as a local MCP server so your AI assistant can audit your Python environment and generate HTML reports on demand — no manual commands needed.
+
+#### Step 1 — Install with MCP support
+
+```bash
+pip install "pip-audit-html[mcp]"
+```
+
+#### Step 2 — Configure your IDE or AI client
+
+**VS Code (GitHub Copilot)**
+
+Add to your VS Code `settings.json`:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "pip-audit-html": {
+        "type": "stdio",
+        "command": "pip-audit-html-mcp"
+      }
+    }
+  }
+}
+```
+
+**Cursor**
+
+Add to your Cursor MCP config (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "pip-audit-html": {
+      "command": "pip-audit-html-mcp"
+    }
+  }
+}
+```
+
+**Claude Desktop**
 
 Add to your `claude_desktop_config.json`:
 
@@ -104,22 +141,94 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Claude Desktop config is usually at:
+Claude Desktop config location:
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **macOS / Linux**: `~/.config/claude/claude_desktop_config.json`
 
-### Run the MCP server manually
+#### Step 3 — Ask your AI assistant
+
+Once configured, your AI can call the tools directly. Example prompts:
+
+- *"Audit my Python environment and show me what's vulnerable."*
+- *"Generate an HTML security report for my project at C:/myproject."*
+- *"Summarize the vulnerabilities in audit.json."*
+- *"Audit my environment, ignore CVE-2024-1234, and save the report to report.html."*
+
+---
+
+### Option 2 — Command Line (pip install + direct invocation)
+
+Use the MCP tools directly from the command line without any IDE or AI client.
+
+#### Step 1 — Install with MCP support
+
+```bash
+pip install "pip-audit-html[mcp]"
+```
+
+#### Step 2 — Run individual tools
+
+Each tool accepts JSON input/output via the command line. Use the `mcp` CLI to call tools directly:
+
+**Audit current environment:**
 
 ```bash
 pip-audit-html-mcp
 ```
 
-### Example AI prompts once connected
+Or invoke tools via the `mcp` client:
 
-- *"Audit my Python environment and show me what's vulnerable."*
-- *"Generate an HTML security report for my project at C:/myproject."*
-- *"Summarize the vulnerabilities in this pip-audit JSON file."*
-- *"Audit my environment and ignore CVE-2024-1234, then save the report to report.html."*
+```bash
+# Audit the active environment and print JSON findings
+python -c "
+from pip_audit_html.server import run_audit, get_summary, generate_report
+import json
+
+# Step 1: run audit
+audit_json = run_audit()
+
+# Step 2: print summary
+summary = json.loads(get_summary(audit_json))
+print(f'Packages: {summary[\"total_dependencies\"]}  Vulnerable: {summary[\"total_vulnerabilities\"]}  Safe: {summary[\"total_safe\"]}')
+
+# Step 3: generate report
+path = generate_report(audit_json, output_path='audit_report.html')
+print(f'Report saved to: {path}')
+"
+```
+
+**One-step audit and report:**
+
+```bash
+python -c "
+from pip_audit_html.server import audit_and_report
+import json
+result = json.loads(audit_and_report(output_path='audit_report.html'))
+print(result)
+"
+```
+
+**Audit a specific virtualenv or project path:**
+
+```bash
+python -c "
+from pip_audit_html.server import audit_and_report
+import json
+result = json.loads(audit_and_report(target_path='C:/myproject', output_path='report.html'))
+print(result)
+"
+```
+
+**Ignore specific CVEs:**
+
+```bash
+python -c "
+from pip_audit_html.server import audit_and_report
+import json
+result = json.loads(audit_and_report(ignore_vulns='CVE-2024-1234,PYSEC-2024-99', output_path='report.html'))
+print(result)
+"
+```
 
 ## Local development
 
