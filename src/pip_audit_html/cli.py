@@ -9,6 +9,10 @@ from pathlib import Path
 from .converter import convert_json_to_html, load_report
 
 
+DEFAULT_AUTHOR_NAME = "Shan Konduru"
+DEFAULT_AUTHOR_URL = "https://www.linkedin.com/in/shankonduru/"
+
+
 def _parse_ignore_ids(raw_values: list[str] | None) -> list[str]:
     if not raw_values:
         return []
@@ -49,12 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--author-name",
-        default=None,
+        default=DEFAULT_AUTHOR_NAME,
         help="Name to show in report footer attribution.",
     )
     parser.add_argument(
         "--author-url",
-        default=None,
+        default=DEFAULT_AUTHOR_URL,
         help="Profile URL to link from footer attribution (for example LinkedIn).",
     )
     parser.add_argument(

@@ -42,6 +42,12 @@ Set custom title and fail build if vulnerabilities exist:
 pip-audit-html pip-audit-report.json -o report.html --title "Weekly Dependency Security" --fail-on-vulns
 ```
 
+Default footer attribution is included in generated reports. You can override it if needed:
+
+```bash
+pip-audit-html pip-audit-report.json -o report.html --author-name "Your Name" --author-url "https://www.linkedin.com/in/your-profile/"
+```
+
 Hide specific vulnerabilities (IDs/CVEs) from rendered HTML output:
 
 ```bash

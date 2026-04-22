@@ -104,7 +104,10 @@ def test_cli_from_file_writes_html(tmp_path):
 
     assert code == 0
     assert output_path.exists()
-    assert "CI Report" in output_path.read_text(encoding="utf-8")
+    output_html = output_path.read_text(encoding="utf-8")
+    assert "CI Report" in output_html
+    assert "Shan Konduru" in output_html
+    assert "https://www.linkedin.com/in/shankonduru/" in output_html
 
 
 @pytest.mark.integration
