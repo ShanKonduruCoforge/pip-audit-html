@@ -92,6 +92,36 @@ Python requirement for MCP support:
 
 All tools accept an optional `ignore_vulns` parameter (comma-separated IDs/CVEs).
 
+### MCP audit timeout configuration
+
+By default, MCP `run_audit` and `audit_and_report` allow up to `600` seconds for `pip-audit` to finish.
+
+Set environment variable `PIP_AUDIT_HTML_TIMEOUT_SECONDS` to control this:
+
+- Positive number (for example `1800`) = timeout in seconds
+- `0`, negative number, `none`, `off`, or `disable` = no timeout
+
+Examples:
+
+```bash
+# 30 minutes
+export PIP_AUDIT_HTML_TIMEOUT_SECONDS=1800
+
+# disable timeout entirely
+export PIP_AUDIT_HTML_TIMEOUT_SECONDS=none
+```
+
+```powershell
+# 30 minutes
+$env:PIP_AUDIT_HTML_TIMEOUT_SECONDS = "1800"
+
+# disable timeout entirely
+$env:PIP_AUDIT_HTML_TIMEOUT_SECONDS = "none"
+```
+
+Legacy name `PIP_AUDIT_HTML_AUDIT_TIMEOUT_SECONDS` is still supported for backward compatibility.
+After changing timeout values, restart your MCP client/session so the server picks up the updated environment.
+
 ---
 
 ### Option 1 — IDE / AI Assistant Integration (VS Code, Cursor, Claude Desktop)
@@ -118,7 +148,10 @@ Add to your VS Code `settings.json`:
     "servers": {
       "pip-audit-html": {
         "type": "stdio",
-        "command": "pip-audit-html-mcp"
+        "command": "pip-audit-html-mcp",
+        "env": {
+          "PIP_AUDIT_HTML_TIMEOUT_SECONDS": "1800"
+        }
       }
     }
   }
@@ -133,7 +166,10 @@ Add to your Cursor MCP config (`~/.cursor/mcp.json`):
 {
   "mcpServers": {
     "pip-audit-html": {
-      "command": "pip-audit-html-mcp"
+      "command": "pip-audit-html-mcp",
+      "env": {
+        "PIP_AUDIT_HTML_TIMEOUT_SECONDS": "1800"
+      }
     }
   }
 }
@@ -147,7 +183,10 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "pip-audit-html": {
-      "command": "pip-audit-html-mcp"
+      "command": "pip-audit-html-mcp",
+      "env": {
+        "PIP_AUDIT_HTML_TIMEOUT_SECONDS": "1800"
+      }
     }
   }
 }

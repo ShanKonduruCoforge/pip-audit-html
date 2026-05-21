@@ -25,6 +25,7 @@ Or configure in Claude Desktop (claude_desktop_config.json)::
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -57,6 +58,43 @@ mcp = FastMCP(
 # ---------------------------------------------------------------------------
 
 
+_DEFAULT_AUDIT_TIMEOUT_SECONDS = 600.0
+_AUDIT_TIMEOUT_ENV_VAR = "PIP_AUDIT_HTML_TIMEOUT_SECONDS"
+_LEGACY_AUDIT_TIMEOUT_ENV_VAR = "PIP_AUDIT_HTML_AUDIT_TIMEOUT_SECONDS"
+
+
+def _get_audit_timeout_seconds() -> float | None:
+    """Return pip-audit timeout from environment.
+
+    The default is 600 seconds. Set PIP_AUDIT_HTML_TIMEOUT_SECONDS to:
+    - a positive number of seconds to override the timeout
+    - 0, a negative number, "none", "off", or "disable" to disable timeout
+
+    Legacy compatibility:
+    - PIP_AUDIT_HTML_AUDIT_TIMEOUT_SECONDS is still accepted when the new
+      variable is not set.
+    """
+    raw_value = os.getenv(_AUDIT_TIMEOUT_ENV_VAR)
+    if raw_value is None:
+        raw_value = os.getenv(_LEGACY_AUDIT_TIMEOUT_ENV_VAR)
+    if raw_value is None:
+        raw_value = str(_DEFAULT_AUDIT_TIMEOUT_SECONDS)
+    raw_value = raw_value.strip()
+
+    if raw_value.lower() in {"none", "off", "disable", "disabled"}:
+        return None
+
+    try:
+        timeout = float(raw_value)
+    except ValueError:
+        return _DEFAULT_AUDIT_TIMEOUT_SECONDS
+
+    if timeout <= 0:
+        return None
+
+    return timeout
+
+
 def _run_pip_audit(target_path: str | None) -> Dict[str, Any]:
     """Run pip-audit against *target_path* (a venv or project directory).
 
@@ -69,13 +107,21 @@ def _run_pip_audit(target_path: str | None) -> Dict[str, Any]:
         resolved = Path(target_path).resolve()
         cmd += ["--path", str(resolved)]
 
+    timeout_seconds = _get_audit_timeout_seconds()
+
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=timeout_seconds,
         )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            "pip-audit timed out. "
+            f"Increase {_AUDIT_TIMEOUT_ENV_VAR} (seconds) or set it to 0/none to disable timeout. "
+            f"Current effective timeout: {timeout_seconds if timeout_seconds is not None else 'disabled'}"
+        ) from exc
     except FileNotFoundError as exc:
         raise RuntimeError(
             "pip-audit is not installed. Run: pip install pip-audit"
