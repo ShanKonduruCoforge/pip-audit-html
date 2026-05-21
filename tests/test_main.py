@@ -109,6 +109,34 @@ def test_load_report_invalid_json_raises_value_error():
         load_report("{bad json}")
 
 
+@pytest.mark.unit
+def test_load_report_safe_is_package_based_not_finding_based():
+    sample = {
+        "dependencies": [
+            {
+                "name": "pkg-a",
+                "version": "1.0.0",
+                "vulns": [
+                    {"id": "PYSEC-1", "fix_versions": []},
+                    {"id": "PYSEC-2", "fix_versions": []},
+                ],
+            },
+            {
+                "name": "pkg-b",
+                "version": "2.0.0",
+                "vulns": [],
+            },
+        ]
+    }
+
+    report = load_report(json.dumps(sample))
+
+    assert report["total_dependencies"] == 2
+    assert report["total_vulnerabilities"] == 2
+    assert report["total_vulnerable_packages"] == 1
+    assert report["total_safe"] == 1
+
+
 @pytest.mark.integration
 def test_cli_from_file_writes_html(tmp_path):
     input_path = tmp_path / "audit.json"
@@ -240,6 +268,37 @@ def test_mcp_get_summary_returns_correct_counts():
     assert result["total_vulnerabilities"] == 1
     assert result["total_safe"] == 1
     assert result["total_skipped"] == 0
+    assert result["is_clean"] is False
+
+
+@pytest.mark.skipif(not MCP_AVAILABLE, reason="mcp extra not installed")
+@pytest.mark.unit
+def test_mcp_get_summary_safe_is_package_based_for_multiple_findings():
+    sample = json.dumps(
+        {
+            "dependencies": [
+                {
+                    "name": "pkg-a",
+                    "version": "1.0.0",
+                    "vulns": [
+                        {"id": "PYSEC-1", "fix_versions": []},
+                        {"id": "PYSEC-2", "fix_versions": []},
+                    ],
+                },
+                {
+                    "name": "pkg-b",
+                    "version": "2.0.0",
+                    "vulns": [],
+                },
+            ]
+        }
+    )
+
+    result = json.loads(get_summary(sample))
+
+    assert result["total_dependencies"] == 2
+    assert result["total_vulnerabilities"] == 2
+    assert result["total_safe"] == 1
     assert result["is_clean"] is False
 
 

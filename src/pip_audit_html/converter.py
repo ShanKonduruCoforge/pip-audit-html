@@ -33,6 +33,7 @@ def load_report(json_text: str, ignore_vuln_ids: List[str] | None = None) -> Dic
     normalized_dependencies: List[Dict[str, Any]] = []
     total_vulns = 0
     total_skipped = 0
+    vulnerable_packages = 0
 
     for dep in dependencies:
         if not isinstance(dep, dict):
@@ -81,6 +82,8 @@ def load_report(json_text: str, ignore_vuln_ids: List[str] | None = None) -> Dic
             )
 
         total_vulns += len(normalized_vulns)
+        if normalized_vulns:
+            vulnerable_packages += 1
         normalized_dependencies.append(
             {
                 "name": name,
@@ -92,13 +95,14 @@ def load_report(json_text: str, ignore_vuln_ids: List[str] | None = None) -> Dic
         )
 
     audited = len(normalized_dependencies) - total_skipped
-    safe_count = audited - total_vulns
+    safe_count = audited - vulnerable_packages
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "dependencies": normalized_dependencies,
         "total_dependencies": len(normalized_dependencies),
         "total_vulnerabilities": total_vulns,
+        "total_vulnerable_packages": vulnerable_packages,
         "total_skipped": total_skipped,
         "total_safe": safe_count,
     }

@@ -35,10 +35,32 @@ jobs:
       - name: Run tests
         run: pytest -v
 
-  # ── 2. Build distribution ───────────────────────────────────────────────────
+  # ── 2. Security checks ─────────────────────────────────────────────────────
+  security:
+    name: Security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package + security tools
+        run: |
+          pip install -e .[dev,mcp]
+          pip install pip-audit bandit
+
+      - name: Run Bandit (source scan)
+        run: bandit -r src/pip_audit_html -q
+
+      - name: Run pip-audit (dependency audit)
+        run: python -m pip_audit
+
+  # ── 3. Build distribution ───────────────────────────────────────────────────
   build:
     name: Build distribution
-    needs: test
+    needs: [test, security]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
