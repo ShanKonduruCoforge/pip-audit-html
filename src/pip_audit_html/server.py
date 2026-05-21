@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 - needed to invoke trusted local `python -m pip_audit`
 import sys
 import tempfile
 from pathlib import Path
@@ -110,7 +110,7 @@ def _run_pip_audit(target_path: str | None) -> Dict[str, Any]:
     timeout_seconds = _get_audit_timeout_seconds()
 
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 - command is fixed argv list, no shell, trusted sys.executable
             cmd,
             capture_output=True,
             text=True,
