@@ -48,7 +48,7 @@ jobs:
 
       - name: Install package + security tools
         run: |
-          pip install -e .[dev,mcp]
+          pip install -e .[dev]
           pip install pip-audit bandit
 
       - name: Run Bandit (source scan)
